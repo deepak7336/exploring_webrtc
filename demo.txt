@@ -1,0 +1,29 @@
+var lc,dc,str;
+var tag = document.querySelector("video");
+async function getMedia() {
+    const str = await navigator.mediaDevices.getUserMedia({ video: true });
+    lc = new RTCPeerConnection();
+    lc.addStream(str);
+    tag.srcObject=str;
+    dc = lc.createDataChannel("channel");
+    dc.onopen = e => console.log("connected");
+    dc.onmessage = e => console.log("msg : " + e.data);
+    lc.onicecandidate = e => console.log("new ice : " + JSON.stringify(lc.localDescription));
+    lc.createOffer().then(o => { lc.setLocalDescription(o); console.log("offer genrated : ") });
+}
+getMedia();
+
+
+
+var tag = document.querySelector("video"),dc;
+const rc = new RTCPeerConnection();
+rc.onicecandidate = e => console.log("new ice : " + JSON.stringify(rc.localDescription));
+rc.ondatachannel = e => {
+    dc = e.channel;
+    rc.dc = e.channel;
+    rc.dc.onmessage = e => console.log("new msg ", e.data)
+    rc.dc.onopen = e => console.log("connected")
+};
+rc.onaddstream=(e)=>tag.srcObject=e.stream;
+rc.setRemoteDescription().then(()=>{
+rc.createAnswer().then(a => rc.setLocalDescription(a)).then(b => console.log("answer created"));})
