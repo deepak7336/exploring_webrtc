@@ -9,9 +9,10 @@ const start = document.getElementById("start");
 const call = document.getElementById("call");
 const hang = document.getElementById("hang");
 let localPeerConnection, remotePeerConnection;
+const deviceList = document.getElementById("deviceList");
 
 start.onclick = (e) => {
-    navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+    navigator.mediaDevices.getUserMedia({ video: { deviceId: '7319271d7686bb89ee37b6ccc8f86fb8075489488d9938e93d12e919bbd1ec0c' } }).then((stream) => {
         localStream = stream;
         localVideo.srcObject = localStream;
     })
@@ -22,9 +23,10 @@ call.onclick = async function (e) {
     localPeerConnection.onicecandidate = gotLocalIceCandidate;
     remotePeerConnection = new RTCPeerConnection();
     remotePeerConnection.onicecandidate = gotRemoteIceCandidate;
-    localPeerConnection.addStream(localStream);
+    localPeerConnection.addTrack(localStream.getTracks()[0], localStream);
     log("Added localStream to localPeerConnection ");
-    remotePeerConnection.onaddstream = gotRemoteStream;
+    log(localPeerConnection);
+    remotePeerConnection.ontrack = gotRemoteStream;
     const offer = await localPeerConnection.createOffer();
     gotLocalDescription(offer);
 }
@@ -42,8 +44,9 @@ function gotRemoteDescription(description) {
 }
 
 function gotRemoteStream(event) {
-    remoteVideo.srcObject = event.stream;
+    remoteVideo.srcObject = event.streams[0];
     log("Received remote stream");
+    console.log(event.streams);
 }
 function gotLocalIceCandidate(event) {
     remotePeerConnection.addIceCandidate(event.candidate);
